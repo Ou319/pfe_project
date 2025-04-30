@@ -76,7 +76,8 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
     return Scaffold(
       backgroundColor: AppColor.white,
       appBar: AppBar(
-        title: const Text('My Projects', 
+        title: const Text(
+          'My Projects',
           style: TextStyle(
             fontWeight: FontWeight.bold,
           ),
@@ -95,7 +96,6 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
                     itemBuilder: (context, index) {
                       final project = _projects[index];
                       final isMember = _projectMemberIds.contains(project['id'].toString());
-                      
                       return _buildProjectCard(context, project, isMember);
                     },
                   ),
@@ -136,22 +136,26 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [Colors.white, Colors.grey.shade100],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            spreadRadius: 2,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
             Navigator.pushReplacement(
               context,
@@ -161,19 +165,18 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row with status
+                // Project name and status
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
                         project['name'] ?? 'No name',
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -181,47 +184,45 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: _getProjectStatusColor(project['status']),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(30),
                       ),
                       child: Text(
                         project['status'] ?? 'Unknown',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
-                // Description
+
+                // Project description
                 Text(
-                  project['description'] ?? 'No description',
+                  project['description'] ?? 'No description available.',
                   style: TextStyle(
-                    color: Colors.grey[700],
-                    height: 1.3,
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    height: 1.4,
                   ),
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
-                // Timeline with progress indicator
+
+                // Progress bar
                 _buildProjectTimeline(project),
-                
-                const SizedBox(height: 16),
-                
-                // Bottom row with dates and membership badge
+
+                const SizedBox(height: 20),
+
+                // Dates and member badge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -229,45 +230,37 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildDateInfo(
-                          Icons.calendar_today_outlined, 
-                          "Start: ${_formatDate(project['start_date'])}"
+                          Icons.calendar_today_outlined,
+                          "Start: ${_formatDate(project['start_date'])}",
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         _buildDateInfo(
-                          Icons.event_outlined, 
-                          "End: ${_formatDate(project['end_date'])}"
+                          Icons.event_outlined,
+                          "End: ${_formatDate(project['end_date'])}",
                         ),
                       ],
                     ),
                     if (isMember)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.green.withOpacity(0.3),
+                            color: Colors.green.shade300,
                             width: 1,
                           ),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Icon(
-                              Icons.person_outline,
-                              size: 14,
-                              color: Colors.green,
-                            ),
-                            SizedBox(width: 4),
+                            Icon(Icons.check_circle_outline, color: Colors.green, size: 16),
+                            SizedBox(width: 5),
                             Text(
                               'Member',
                               style: TextStyle(
-                                color: Colors.green,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green,
                               ),
                             ),
                           ],
@@ -284,14 +277,12 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
   }
 
   Widget _buildProjectTimeline(Map<String, dynamic> project) {
-    // Calculate progress based on dates (simplified)
-    double progress = 0.5; // Default to 50% as a placeholder
-    
+    double progress = 0.5;
     try {
       final startDate = DateTime.parse(project['start_date']);
       final endDate = DateTime.parse(project['end_date']);
       final today = DateTime.now();
-      
+
       if (today.isBefore(startDate)) {
         progress = 0;
       } else if (today.isAfter(endDate)) {
@@ -300,12 +291,9 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
         final totalDuration = endDate.difference(startDate).inDays;
         final elapsedDuration = today.difference(startDate).inDays;
         progress = totalDuration > 0 ? elapsedDuration / totalDuration : 0;
-        // Clamp progress between 0 and 1
         progress = progress.clamp(0.0, 1.0);
       }
-    } catch (e) {
-      // Use default progress if dates are invalid
-    }
+    } catch (e) {}
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +365,7 @@ class _WorkerProjectsPageState extends State<WorkerProjectsPage> {
         return Colors.grey;
     }
   }
-  
+
   Color _getProgressColor(double progress) {
     if (progress < 0.3) return Colors.red;
     if (progress < 0.7) return Colors.orange;

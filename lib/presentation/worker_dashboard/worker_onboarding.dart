@@ -205,51 +205,7 @@ class _WorkerOnboardingState extends State<WorkerOnboarding> with SingleTickerPr
             ),
             
             // Instagram-style top bar with username and time
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  children: [
-                    // Circular avatar
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[800],
-                        image: const DecorationImage(
-                          image: NetworkImage("https://ui-avatars.com/api/?name=Worker&background=random"),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Username and time
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "worker_app",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          "Just now",
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            
             
             // Instagram-style bottom swipe up indication (only on last page)
             if (_currentPage == _pages.length - 1)

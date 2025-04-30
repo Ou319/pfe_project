@@ -111,12 +111,12 @@ class _LoginState extends State<Login> {
               );
             } else {
               // Worker has completed onboarding - go to Worker Projects page
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const WorkerProjectsPage(selectedProject: {}),
-                ),
-              );
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const WorkerProjectsPage(selectedProject: {}),
+              ),
+            );
             }
           }
         }

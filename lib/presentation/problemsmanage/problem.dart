@@ -395,6 +395,7 @@ class _ProblemState extends State<Problem> {
     final assignedUser = isAssigned ? relation[0]['profiles'] : null;
     final status = problem['status'] ?? 'unknown';
     final type = problem['type'] ?? 'unknown';
+    final isResolved = status == 'resolved';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -445,13 +446,49 @@ class _ProblemState extends State<Problem> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    problem['title'] ?? 'Untitled Problem',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          problem['title'] ?? 'Untitled Problem',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: isResolved ? Colors.grey[600] : Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isResolved)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.check_circle,
+                                                size: 14,
+                                                color: Colors.green[700],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Resolved',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  color: Colors.green[700],
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   // Enhanced Description Section
@@ -461,10 +498,10 @@ class _ProblemState extends State<Problem> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[50],
+                                      color: isResolved ? Colors.grey[50] : Colors.grey[50],
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.grey[200]!,
+                                        color: isResolved ? Colors.grey[200]! : Colors.grey[200]!,
                                         width: 1,
                                       ),
                                     ),
@@ -476,7 +513,7 @@ class _ProblemState extends State<Problem> {
                                             Icon(
                                               Icons.description_outlined,
                                               size: 16,
-                                              color: Colors.grey[600],
+                                              color: isResolved ? Colors.grey[400] : Colors.grey[600],
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
@@ -484,7 +521,7 @@ class _ProblemState extends State<Problem> {
                                               style: GoogleFonts.poppins(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w500,
-                                                color: Colors.grey[600],
+                                                color: isResolved ? Colors.grey[400] : Colors.grey[600],
                                               ),
                                             ),
                                           ],
@@ -494,7 +531,7 @@ class _ProblemState extends State<Problem> {
                                           problem['description'] ?? 'No description provided',
                                           style: GoogleFonts.poppins(
                                             fontSize: 14,
-                                            color: Colors.grey[800],
+                                            color: isResolved ? Colors.grey[500] : Colors.grey[800],
                                             height: 1.5,
                                           ),
                                           maxLines: 3,
@@ -514,10 +551,10 @@ class _ProblemState extends State<Problem> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColor.primary.withOpacity(0.1),
+                              color: isResolved ? Colors.grey[200] : AppColor.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: AppColor.primary.withOpacity(0.2),
+                                color: isResolved ? Colors.grey[300]! : AppColor.primary.withOpacity(0.2),
                                 width: 1,
                               ),
                             ),
@@ -527,7 +564,7 @@ class _ProblemState extends State<Problem> {
                                 Icon(
                                   _getTypeIcon(type),
                                   size: 16,
-                                  color: AppColor.primary,
+                                  color: isResolved ? Colors.grey[600] : AppColor.primary,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -535,7 +572,7 @@ class _ProblemState extends State<Problem> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColor.primary,
+                                    color: isResolved ? Colors.grey[600] : AppColor.primary,
                                   ),
                                 ),
                               ],
@@ -551,7 +588,7 @@ class _ProblemState extends State<Problem> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
+                                color: isResolved ? Colors.grey[100] : Colors.blue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: Row(
@@ -559,13 +596,13 @@ class _ProblemState extends State<Problem> {
                                 children: [
                                   CircleAvatar(
                                     radius: 14,
-                                    backgroundColor: Colors.blue.withOpacity(0.2),
+                                    backgroundColor: isResolved ? Colors.grey[300] : Colors.blue.withOpacity(0.2),
                                     child: Text(
                                       '${assignedUser['first_name'][0]}${assignedUser['last_name'][0]}'.toUpperCase(),
                                       style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.blue,
+                                        color: isResolved ? Colors.grey[600] : Colors.blue,
                                       ),
                                     ),
                                   ),
@@ -575,7 +612,7 @@ class _ProblemState extends State<Problem> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.blue,
+                                      color: isResolved ? Colors.grey[600] : Colors.blue,
                                     ),
                                   ),
                                 ],
@@ -591,7 +628,7 @@ class _ProblemState extends State<Problem> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: isResolved ? Colors.grey[100] : Colors.grey[100],
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -600,14 +637,14 @@ class _ProblemState extends State<Problem> {
                                 Icon(
                                   Icons.access_time,
                                   size: 14,
-                                  color: Colors.grey[600],
+                                  color: isResolved ? Colors.grey[400] : Colors.grey[600],
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _formatDate(problem['created_at']),
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: isResolved ? Colors.grey[400] : Colors.grey[600],
                                   ),
                                 ),
                               ],

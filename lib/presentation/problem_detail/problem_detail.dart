@@ -23,6 +23,9 @@ class _ProblemDetailState extends State<ProblemDetail> {
   String? _assignedToId;
   List<Map<String, dynamic>> _allUsers = [];
   bool _showAllUsers = false;
+  Map<String, dynamic>? _reporterProfile;
+  bool _isTimeImportant = true;
+  DateTime? _selectedEndDate;
 
   // Add these controllers for the form
   final TextEditingController _missionController = TextEditingController();
@@ -43,6 +46,21 @@ class _ProblemDetailState extends State<ProblemDetail> {
   Future<void> _loadInitialData() async {
     try {
       setState(() => _isLoading = true);
+      
+      // Load reporter's profile
+      if (widget.problem['user_id'] != null) {
+        final reporterResponse = await _supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', widget.problem['user_id'])
+            .single();
+        
+        if (reporterResponse != null) {
+          setState(() {
+            _reporterProfile = reporterResponse;
+          });
+        }
+      }
       
       // Load current assignment
       final assignmentResponse = await _supabase
@@ -140,6 +158,8 @@ class _ProblemDetailState extends State<ProblemDetail> {
   Future<void> _showAssignmentForm(String userId, String userName) async {
     _missionController.text = ''; // Reset mission text
     _selectedStartDate = DateTime.now(); // Default to today
+    _selectedEndDate = DateTime.now().add(const Duration(days: 1)); // Default to tomorrow
+    _isTimeImportant = true;
 
     final result = await showDialog<bool>(
       context: context,
@@ -160,6 +180,28 @@ class _ProblemDetailState extends State<ProblemDetail> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Time Importance Switch
+                    Row(
+                      children: [
+                        Switch(
+                          value: _isTimeImportant,
+                          onChanged: (value) {
+                            setState(() => _isTimeImportant = value);
+                          },
+                          activeColor: AppColor.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Time is important',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
                     // Start Date Picker
                     Text(
                       'Start Date',
@@ -205,6 +247,55 @@ class _ProblemDetailState extends State<ProblemDetail> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // End Date Picker (only if time is important)
+                    if (_isTimeImportant) ...[
+                      Text(
+                        'End Date',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedEndDate ?? DateTime.now().add(const Duration(days: 1)),
+                            firstDate: _selectedStartDate ?? DateTime.now(),
+                            lastDate: DateTime(2101),
+                          );
+                          if (picked != null) {
+                            setState(() => _selectedEndDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _selectedEndDate != null
+                                    ? '${_selectedEndDate!.day}/${_selectedEndDate!.month}/${_selectedEndDate!.year}'
+                                    : 'Select Date',
+                                style: GoogleFonts.poppins(fontSize: 14),
+                              ),
+                              const Icon(Icons.calendar_today, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Mission TextField
                     Text(
                       'Mission Description',
@@ -240,7 +331,7 @@ class _ProblemDetailState extends State<ProblemDetail> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: _selectedStartDate != null
+                  onPressed: _selectedStartDate != null && (!_isTimeImportant || _selectedEndDate != null)
                       ? () => Navigator.of(context).pop(true)
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -262,15 +353,17 @@ class _ProblemDetailState extends State<ProblemDetail> {
       await _assignProblem(
         userId,
         startDate: _selectedStartDate!,
+        endDate: _isTimeImportant ? _selectedEndDate : null,
         mission: _missionController.text.trim(),
       );
     }
   }
 
-  // Modify the _assignProblem method to accept new parameters
+  // Modify the _assignProblem method to handle end date
   Future<void> _assignProblem(
     String userId, {
     required DateTime startDate,
+    DateTime? endDate,
     required String mission,
   }) async {
     try {
@@ -310,15 +403,16 @@ class _ProblemDetailState extends State<ProblemDetail> {
           .eq('id_propleme', widget.problem['id'])
           .maybeSingle();
 
-      final formattedDate = startDate.toIso8601String().split('T')[0];
+      final formattedStartDate = startDate.toIso8601String().split('T')[0];
+      final formattedEndDate = endDate?.toIso8601String().split('T')[0];
 
       if (existingRelation != null && existingRelation['id'] != null) {
         final updateResponse = await _supabase
             .from('propleme_relation')
             .update({
               'id_user': userId,
-              'time_start': formattedDate,
-              'time_end': null,
+              'time_start': formattedStartDate,
+              'time_end': formattedEndDate,
               'mission': mission,
               'is_fixed': false,
             })
@@ -328,8 +422,8 @@ class _ProblemDetailState extends State<ProblemDetail> {
         final insertData = {
           'id_propleme': widget.problem['id'],
           'id_user': userId,
-          'time_start': formattedDate,
-          'time_end': null,
+          'time_start': formattedStartDate,
+          'time_end': formattedEndDate,
           'mission': mission,
           'is_fixed': false,
         };
@@ -478,25 +572,165 @@ class _ProblemDetailState extends State<ProblemDetail> {
   }
 
   Widget _buildAssignmentInfo(Map<String, dynamic> problem) {
+    // Check if problem is resolved
+    if (problem['status'] == 'resolved') {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Problem Resolved',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'This problem has been marked as resolved and cannot be assigned.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (_assignedToName != null) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.blue.withOpacity(0.1),
+                    child: Text(
+                      _formatUserInitials(
+                        _assignedToName!.split(' ')[0],
+                        _assignedToName!.split(' ').length > 1 ? _assignedToName!.split(' ')[1] : '',
+                      ),
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Resolved by',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          _assignedToName!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     if (_assignedToId == null || _assignedToName == null) {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 16),
-        child: ElevatedButton.icon(
-          onPressed: () {
-            setState(() {
-              _showMembers = true;
-            });
-          },
-          icon: const Icon(Icons.person_add),
-          label: const Text('Assign Someone to Fix This Problem'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColor.primary,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 12,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                _showMembers = true;
+              });
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColor.primary,
+                    AppColor.primary.withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColor.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_add_alt_1,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Assign Someone to Fix This Problem',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -716,16 +950,89 @@ class _ProblemDetailState extends State<ProblemDetail> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Problem Image
+                  // Problem Image with enhanced design
                   if (widget.problem['image_url'] != null)
                     Container(
-                      height: 200,
+                      height: 250,
                       margin: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: NetworkImage(widget.problem['image_url']),
-                          fit: BoxFit.cover,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              widget.problem['image_url'],
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                      color: AppColor.primary,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          size: 40,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Failed to load image',
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            // Gradient overlay for better text visibility
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withOpacity(0.7),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -839,8 +1146,8 @@ class _ProblemDetailState extends State<ProblemDetail> {
                               radius: 20,
                               backgroundColor: AppColor.primary,
                               child: Text(
-                                widget.userProfile != null
-                                    ? '${widget.userProfile!['first_name'][0]}${widget.userProfile!['last_name'][0]}'
+                                _reporterProfile != null
+                                    ? '${_reporterProfile!['first_name'][0]}${_reporterProfile!['last_name'][0]}'
                                     : '?',
                                 style: const TextStyle(
                                   color: Colors.white,
@@ -849,14 +1156,27 @@ class _ProblemDetailState extends State<ProblemDetail> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              widget.userProfile != null
-                                  ? '${widget.userProfile!['first_name']} ${widget.userProfile!['last_name']}'
-                                  : 'Unknown User',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _reporterProfile != null
+                                      ? '${_reporterProfile!['first_name']} ${_reporterProfile!['last_name']}'
+                                      : 'Unknown User',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (_reporterProfile != null)
+                                  Text(
+                                    _reporterProfile!['mission'] ?? 'No role specified',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
