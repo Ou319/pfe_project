@@ -50,10 +50,10 @@ class _ChartDetailsPageState extends State<ChartDetailsPage> {
       setState(() => _isLoading = true);
 
       final response = await _supabase
-          .from('proplemes')
+          .from('problems')
           .select('''
             *,
-            propleme_relation!left(
+            problem_relation!left(
               id,
               id_user,
               time_start,
@@ -95,10 +95,10 @@ class _ChartDetailsPageState extends State<ChartDetailsPage> {
     try {
       final nextPage = _currentPage + 1;
       final response = await _supabase
-          .from('proplemes')
+          .from('problems')
           .select('''
             *,
-            propleme_relation!left(
+            problem_relation!left(
               id,
               id_user,
               time_start,
@@ -217,7 +217,7 @@ class _ChartDetailsPageState extends State<ChartDetailsPage> {
                     }
 
                     final problem = _problems[index];
-                    final relation = problem['propleme_relation']?[0];
+                    final relation = problem['problem_relation']?[0];
                     final assignedUser = relation?['profiles'];
                     final isFixed = relation?['is_fixed'] ?? false;
 

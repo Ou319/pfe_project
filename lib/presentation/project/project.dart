@@ -8,6 +8,7 @@ import '../navigationbottombar/view/navigationbottombar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../ressourses/imgmanager.dart';
 import 'dart:async';
+import 'projectDetails.dart';
 
 class Project extends StatefulWidget {
   const Project({super.key});
@@ -487,28 +488,9 @@ class _ProjectState extends State<Project> {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder:
-                                                      (context) => Scaffold(
-                                                        appBar: AppBar(
-                                                          title: Text(
-                                                            'Project Details',
-                                                            style:
-                                                                GoogleFonts.poppins(
-                                                                  fontSize: 18,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        body: Center(
-                                                          child: Text(
-                                                            'Project details page coming soon...',
-                                                            style:
-                                                                GoogleFonts.poppins(),
-                                                          ),
-                                                        ),
-                                                      ),
+                                                  builder: (context) => ProjectDetails(
+                                                    project: project,
+                                                  ),
                                                 ),
                                               );
                                             },

@@ -4,7 +4,6 @@ import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:html' as html;
 
 void main() {
   // Initialize ZegoUIKit
@@ -123,30 +122,10 @@ class _MeethingState extends State<Meething> {
     });
     
     if (kIsWeb) {
-      // For web, request permissions when starting the meeting
-      try {
-        final stream = await html.window.navigator.mediaDevices?.getUserMedia({
-          'video': true,
-          'audio': true
-        });
-        if (stream != null) {
-          stream.getTracks().forEach((track) => track.stop());
-          setState(() {
-            hasCameraPermission = true;
-          });
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please allow camera and microphone access'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-        setState(() {
-          isStartingMeeting = false;
-        });
-        return;
-      }
+      // For web, we'll assume permissions are granted
+      setState(() {
+        hasCameraPermission = true;
+      });
     }
     
     setState(() {
@@ -205,14 +184,14 @@ class _MeethingState extends State<Meething> {
                       const Icon(
                         Icons.camera_alt,
                         size: 64,
-                        color: Colors.red,
+                        color: Colors.grey,
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Camera and Microphone Access Required',
-                        style: TextStyle(fontSize: 18),
+                        'Camera and microphone access required',
+                        style: TextStyle(fontSize: 16),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _checkPermissions,
                         child: const Text('Grant Permissions'),
@@ -220,127 +199,30 @@ class _MeethingState extends State<Meething> {
                     ],
                   ),
                 )
-          : isInCall
-              ? Stack(
-                  children: [
-                    ZegoUIKitPrebuiltCall(
-                      appID: appID,
-                      appSign: appSign,
-                      userID: userID,
-                      userName: userName,
-                      callID: callID,
-                      config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall()
-                        ..turnOnCameraWhenJoining = true
-                        ..turnOnMicrophoneWhenJoining = true
-                        ..useSpeakerWhenJoining = true,
-                    ),
-                    if (inviteUrl != null)
-                      Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.link, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Invite URL: $inviteUrl',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                )
               : Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.video_camera_front_rounded,
-                          size: 100,
-                          color: Colors.blue,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!isInCall) ...[
+                        ElevatedButton.icon(
+                          onPressed: startMeeting,
+                          icon: const Icon(Icons.video_call),
+                          label: const Text('Start Meeting'),
                         ),
-                        const SizedBox(height: 30),
-                        const Text(
-                          'Start a Video Meeting',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'How to use:',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                kIsWeb
-                                    ? '1. Click "Start Meeting" to begin\n'
-                                      '2. Allow camera/microphone access\n'
-                                      '3. Click the person icon to get invite URL\n'
-                                      '4. Share the URL with others\n'
-                                      '5. Click hang up to end the meeting'
-                                    : '1. Click "Start Meeting" to begin\n'
-                                      '2. Click the person icon to get invite URL\n'
-                                      '3. Share the URL with others\n'
-                                      '4. Click hang up to end the meeting',
-                                style: const TextStyle(fontSize: 16),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        ElevatedButton(
-                          onPressed: isStartingMeeting ? null : startMeeting,
+                      ] else ...[
+                        const Text('Meeting in progress...'),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: endCall,
+                          icon: const Icon(Icons.call_end),
+                          label: const Text('End Meeting'),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isStartingMeeting ? Icons.hourglass_empty : Icons.video_call,
-                                size: 28,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                isStartingMeeting ? 'Starting...' : 'Start Meeting',
-                                style: const TextStyle(fontSize: 20),
-                              ),
-                            ],
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
     );
