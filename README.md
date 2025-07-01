@@ -36,6 +36,11 @@ JWT or token-based authentication (depending on backend)
 
 📱 Modern UI/UX
 Clean and modern UI using [Flutter]
+![Screenshot 2025-06-10 225645](https://github.com/user-attachments/assets/dd3e5db5-5a12-47ce-a8a0-bb76c8ac1ef3)![Screenshot 2025-06-13 115809](https://github.com/user-attachments/assets/a2e14e61-c1d4-4fe8-a66d-c4f00a00488e)![Screenshot 2025-06-10 233903](https://github.com/user-attachments/assets/5e147f5f-66d7-4706-8b1e-87066c076a69) ![Screenshot 2025-06-10 231102](https://github.com/user-attachments/assets/6d187cd6-7269-451c-8f64-0669639244bc) ![Screenshot 2025-06-10 232129](https://github.com/user-attachments/assets/273d1e31-61f1-45ae-b4b5-1e0e3213efae)
+
+
+
+
 
 Responsive design for various screen sizes
 
